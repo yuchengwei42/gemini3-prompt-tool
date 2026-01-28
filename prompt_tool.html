@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prompt Optimizer (Free API Edition)</title>
-    <!-- 引入 Vue 3 和 Tailwind CSS -->
+    <!-- Vue 3 & Tailwind CSS -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Icon -->
@@ -22,59 +22,92 @@
     
     <!-- 左側：編輯區 -->
     <div class="w-full lg:w-3/5 flex flex-col gap-4">
-        <header class="mb-4">
-            <h1 class="text-3xl font-bold text-blue-400"><i class="fa-solid fa-layer-group"></i> Prompt Composer</h1>
-            <p class="text-slate-400 text-sm">結構化 Prompt 優化器 (整合 SiliconFlow 免費模型)</p>
+        <header class="mb-4 flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-400"><i class="fa-solid fa-layer-group"></i> {{ t('appTitle') }}</h1>
+                <p class="text-slate-400 text-sm">{{ t('appSubtitle') }}</p>
+            </div>
+            <!-- 語言選擇器 -->
+            <select v-model="currentLang" class="bg-slate-800 text-slate-300 text-xs py-1 px-2 rounded border border-slate-600 outline-none">
+                <option value="en">English</option>
+                <option value="zh">繁體中文</option>
+                <option value="ja">日本語  </option>
+            </select>
         </header>
 
-        <!-- API 設定區 (整合模型選擇) -->
+        <!-- API 設定區 -->
         <div class="glass p-4 rounded-lg flex flex-col gap-3 mb-2">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-key text-yellow-500"></i>
-                <input v-model="apiKey" type="password" placeholder="貼上 SiliconFlow API Key (sk-...)" class="bg-transparent border-b border-slate-600 outline-none text-sm w-full text-slate-300 placeholder-slate-600 py-1 focus:border-blue-500 transition">
-                <button @click="saveKey" class="text-xs bg-slate-700 px-3 py-1.5 rounded hover:bg-slate-600 whitespace-nowrap">儲存 Key</button>
+                <input v-model="apiKey" type="password" :placeholder="t('apiKeyPlaceholder')" class="bg-transparent border-b border-slate-600 outline-none text-sm w-full text-slate-300 placeholder-slate-600 py-1 focus:border-blue-500 transition">
+                <button @click="saveKey" class="text-xs bg-slate-700 px-3 py-1.5 rounded hover:bg-slate-600 whitespace-nowrap">{{ t('saveKey') }}</button>
             </div>
             
             <div class="flex items-center gap-2 pl-6">
                 <i class="fa-solid fa-robot text-blue-400 text-xs"></i>
-                <!-- 模型選擇選單 -->
                 <select v-model="selectedModel" class="bg-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded border border-slate-600 w-full outline-none focus:border-blue-500 cursor-pointer">
-                    <optgroup label="✨ 強力推薦 (綜合能力強)">
-                        <option value="Qwen/Qwen2.5-7B-Instruct">Qwen 2.5 7B Instruct (推薦首選)</option>
-                        <option value="THUDM/glm-4-9b-chat">GLM-4 9B Chat (中英互譯優)</option>
+                    <optgroup :label="t('modelGroupRec')">
+                        <option value="Qwen/Qwen2.5-7B-Instruct">Qwen 2.5 7B Instruct (Recommended)</option>
+                        <option value="THUDM/glm-4-9b-chat">GLM-4 9B Chat</option>
                     </optgroup>
-                    <optgroup label="📚 翻譯專用">
-                        <option value="tencent/Hunyuan-MT-7B">Hunyuan MT 7B (騰訊混元翻譯)</option>
+                    <optgroup :label="t('modelGroupTrans')">
+                        <option value="tencent/Hunyuan-MT-7B">Hunyuan MT 7B</option>
                     </optgroup>
-                    <optgroup label="🆓 其他免費模型">
-                        <option value="Qwen/Qwen2.5-Coder-7B-Instruct">Qwen 2.5 Coder (程式碼翻譯用)</option>
+                    <optgroup :label="t('modelGroupFree')">
+                        <option value="Qwen/Qwen2.5-Coder-7B-Instruct">Qwen 2.5 Coder</option>
                         <option value="internlm/internlm2_5-7b-chat">InternLM 2.5 7B</option>
                         <option value="01-ai/Yi-1.5-9B-Chat-16K">Yi 1.5 9B Chat</option>
-                        <option value="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B">DeepSeek R1 Distill (推理型)</option>
+                        <option value="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B">DeepSeek R1 Distill</option>
                     </optgroup>
                 </select>
             </div>
         </div>
 
-        <!-- 積木區塊列表 -->
-        <div v-for="(block, index) in blocks" :key="index" class="glass rounded-xl p-4 relative group transition-all duration-300 hover:border-blue-500/50">
+        <!-- 積木區塊列表 (改為箭頭排序) -->
+        <div 
+            v-for="(block, index) in blocks" 
+            :key="index" 
+            class="glass rounded-xl p-4 relative group transition-all duration-300 hover:border-blue-500/50"
+        >
             <!-- 區塊頭部 -->
             <div class="flex justify-between items-center mb-2">
-                <select v-model="block.type" class="bg-slate-800 text-blue-300 text-xs font-bold py-1 px-2 rounded border border-slate-700 uppercase tracking-wide cursor-pointer">
-                    <option value="text">Plain Text (無標籤)</option>
-                    <option value="role">Role (角色)</option>
-                    <option value="context">Context (背景)</option>
-                    <option value="task">Task (任務)</option>
-                    <option value="code">Code (程式碼)</option>
-                    <option value="constraints">Constraints (限制)</option>
-                </select>
+                <div class="flex items-center gap-2">
+                    <!-- 排序按鈕 (替代原本的 Grip) -->
+                    <div class="flex items-center bg-slate-800/50 rounded border border-slate-700 mr-1">
+                        <button 
+                            @click="moveBlockUp(index)" 
+                            :disabled="index === 0"
+                            class="px-2 py-1 text-slate-500 hover:text-blue-400 hover:bg-slate-700 disabled:opacity-30 disabled:hover:text-slate-500 disabled:hover:bg-transparent transition rounded-l border-r border-slate-700"
+                            title="Move Up"
+                        >
+                            <i class="fa-solid fa-arrow-up text-xs"></i>
+                        </button>
+                        <button 
+                            @click="moveBlockDown(index)" 
+                            :disabled="index === blocks.length - 1"
+                            class="px-2 py-1 text-slate-500 hover:text-blue-400 hover:bg-slate-700 disabled:opacity-30 disabled:hover:text-slate-500 disabled:hover:bg-transparent transition rounded-r"
+                            title="Move Down"
+                        >
+                            <i class="fa-solid fa-arrow-down text-xs"></i>
+                        </button>
+                    </div>
+                    
+                    <select v-model="block.type" class="bg-slate-800 text-blue-300 text-xs font-bold py-1 px-2 rounded border border-slate-700 uppercase tracking-wide cursor-pointer">
+                        <option value="text">Plain Text</option>
+                        <option value="role">Role</option>
+                        <option value="context">Context</option>
+                        <option value="task">Task</option>
+                        <option value="code">Code</option>
+                        <option value="constraints">Constraints</option>
+                    </select>
+                </div>
                 
                 <div class="flex gap-2 opacity-100 lg:opacity-50 group-hover:opacity-100 transition-opacity">
                     <!-- 翻譯按鈕 -->
                     <button @click="translateBlock(index)" :disabled="block.isTranslating" class="text-xs bg-indigo-900 text-indigo-200 px-2 py-1 rounded hover:bg-indigo-800 flex items-center gap-1 transition">
                         <i v-if="block.isTranslating" class="fa-solid fa-circle-notch fa-spin text-blue-300"></i>
                         <i v-else class="fa-solid fa-language"></i> 
-                        {{ block.isTranslating ? '翻譯中...' : '轉英文' }}
+                        {{ block.isTranslating ? t('translating') : t('toEnglish') }}
                     </button>
                     <!-- 刪除按鈕 -->
                     <button @click="removeBlock(index)" class="text-xs text-red-400 hover:text-red-300 px-2 transition"><i class="fa-solid fa-trash"></i></button>
@@ -106,13 +139,13 @@
         
         <!-- 設定面板 -->
         <div class="glass rounded-xl p-5">
-            <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider">Optimization Strategies</h2>
+            <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider">{{ t('strategiesTitle') }}</h2>
             
             <label class="flex items-center gap-3 p-2 hover:bg-slate-800/50 rounded cursor-pointer transition">
                 <input type="checkbox" v-model="settings.useRepetition" class="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-500 accent-blue-600">
                 <div>
                     <div class="text-sm text-slate-200 font-medium">Prompt Repetition</div>
-                    <div class="text-[10px] text-slate-500">重複核心 Task 指令，增強模型遵循力。</div>
+                    <div class="text-[10px] text-slate-500">{{ t('repetitionDesc') }}</div>
                 </div>
             </label>
 
@@ -120,7 +153,7 @@
                 <input type="checkbox" v-model="settings.addCoT" class="w-4 h-4 rounded bg-slate-700 border-slate-600 text-pink-500 accent-pink-600">
                 <div>
                     <div class="text-sm text-slate-200 font-medium">Chain of Thought (CoT)</div>
-                    <div class="text-[10px] text-slate-500">加入 "Think step-by-step" 激發推理能力。</div>
+                    <div class="text-[10px] text-slate-500">{{ t('cotDesc') }}</div>
                 </div>
             </label>
         </div>
@@ -132,7 +165,7 @@
                     <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> OUTPUT PREVIEW
                 </span>
                 <button @click="copyPrompt" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition shadow-lg shadow-blue-900/20 font-bold">
-                    <i class="fa-regular fa-copy"></i> 複製全部
+                    <i class="fa-regular fa-copy"></i> {{ t('copyAll') }}
                 </button>
             </div>
             <textarea readonly class="flex-1 w-full bg-[#0b1120] text-slate-300 p-4 font-mono text-xs leading-loose outline-none resize-none" v-model="finalPrompt"></textarea>
@@ -148,10 +181,87 @@
 <script>
     const { createApp, ref, computed, onMounted } = Vue;
 
+    // 多語言字典 (I18n Dictionary)
+    const translations = {
+        en: {
+            appTitle: 'Prompt Composer',
+            appSubtitle: 'Structured Prompt Optimizer (SiliconFlow API Integrated)',
+            apiKeyPlaceholder: 'Paste SiliconFlow API Key (sk-...)',
+            saveKey: 'Save Key',
+            modelGroupRec: '✨ Recommended (Strong All-rounder)',
+            modelGroupTrans: '📚 Translation Specialized',
+            modelGroupFree: '🆓 Other Free Models',
+            translating: 'Translating...',
+            toEnglish: 'To English',
+            strategiesTitle: 'Optimization Strategies',
+            repetitionDesc: 'Repeats core Task instructions to improve model compliance.',
+            cotDesc: 'Adds "Think step-by-step" to trigger reasoning capabilities.',
+            copyAll: 'Copy All',
+            ph_role: 'Define AI Persona (e.g., You are an expert in...)',
+            ph_context: 'Paste background context, data, or documents...',
+            ph_task: 'Describe the main task or instruction...',
+            ph_code: 'Paste code snippets...',
+            ph_constraints: 'Set limitations (e.g., No external libraries)...',
+            ph_default: 'Enter content...',
+            alertKeySaved: 'API Key and Model preference saved!',
+            alertNoKey: 'Please enter and save your SiliconFlow API Key first.',
+            alertTranslateFail: 'Translation failed: '
+        },
+        zh: {
+            appTitle: 'Prompt Composer',
+            appSubtitle: '結構化 Prompt 優化器 (整合 SiliconFlow 免費模型)',
+            apiKeyPlaceholder: '貼上 SiliconFlow API Key (sk-...)',
+            saveKey: '儲存 Key',
+            modelGroupRec: '✨ 強力推薦 (綜合能力強)',
+            modelGroupTrans: '📚 翻譯專用',
+            modelGroupFree: '🆓 其他免費模型',
+            translating: '翻譯中...',
+            toEnglish: '轉英文',
+            strategiesTitle: '優化策略 (Strategies)',
+            repetitionDesc: '重複核心 Task 指令，增強模型遵循力。',
+            cotDesc: '加入 "Think step-by-step" 激發推理能力。',
+            copyAll: '複製全部',
+            ph_role: '定義 AI 的角色 (Persona)...',
+            ph_context: '貼上背景資訊、文件或數據...',
+            ph_task: '描述主要的任務指令...',
+            ph_code: '貼上程式碼片段...',
+            ph_constraints: '限制條件 (如：不可使用外部庫)...',
+            ph_default: '輸入內容...',
+            alertKeySaved: 'API Key 與模型選擇已儲存！',
+            alertNoKey: '請先在左上方輸入並儲存 API Key (SiliconFlow)',
+            alertTranslateFail: '翻譯失敗: '
+        },
+        ja: {
+            appTitle: 'Prompt Composer',
+            appSubtitle: '構造化プロンプト最適化ツール (SiliconFlow API 統合)',
+            apiKeyPlaceholder: 'SiliconFlow API Key を貼り付け (sk-...)',
+            saveKey: '保存',
+            modelGroupRec: '✨ 推奨 (高性能)',
+            modelGroupTrans: '📚 翻訳専用',
+            modelGroupFree: '🆓 その他無料モデル',
+            translating: '翻訳中...',
+            toEnglish: '英語へ',
+            strategiesTitle: '最適化戦略',
+            repetitionDesc: '指示を繰り返し、コンプライアンスを向上させます。',
+            cotDesc: '"Think step-by-step" を追加し、推論能力を引き出します。',
+            copyAll: 'すべてコピー',
+            ph_role: 'AIの役割を定義 (Persona)...',
+            ph_context: '背景情報、データ、ドキュメントを貼り付け...',
+            ph_task: '主なタスクや指示を記述...',
+            ph_code: 'コードスニペットを貼り付け...',
+            ph_constraints: '制約事項 (例: 外部ライブラリ使用禁止)...',
+            ph_default: '内容を入力...',
+            alertKeySaved: 'APIキーとモデル設定を保存しました！',
+            alertNoKey: '左上のAPI Keyを入力して保存してください。',
+            alertTranslateFail: '翻訳失敗: '
+        }
+    };
+
     createApp({
         setup() {
             const apiKey = ref('');
             const selectedModel = ref('Qwen/Qwen2.5-7B-Instruct');
+            const currentLang = ref('en'); // Default language
             
             const blocks = ref([
                 { type: 'role', content: 'You are Gemini 3, a Distinguished Software Architect. You are precise, pragmatic, and heavily biased towards modern coding practices.', isTranslating: false },
@@ -164,17 +274,45 @@
                 addCoT: true
             });
 
+            // I18n Helper
+            const t = (key) => {
+                return translations[currentLang.value][key] || translations['en'][key];
+            };
+
             onMounted(() => {
                 const savedKey = localStorage.getItem('siliconflow_key');
                 const savedModel = localStorage.getItem('siliconflow_model');
+                const savedLang = localStorage.getItem('app_lang');
                 if (savedKey) apiKey.value = savedKey;
                 if (savedModel) selectedModel.value = savedModel;
+                if (savedLang && translations[savedLang]) currentLang.value = savedLang;
             });
+
+            // --- Reorder Logic (Arrow Buttons) ---
+            const moveBlockUp = (index) => {
+                if (index > 0) {
+                    // 交換位置
+                    const temp = blocks.value[index];
+                    blocks.value[index] = blocks.value[index - 1];
+                    blocks.value[index - 1] = temp;
+                }
+            };
+
+            const moveBlockDown = (index) => {
+                if (index < blocks.value.length - 1) {
+                    // 交換位置
+                    const temp = blocks.value[index];
+                    blocks.value[index] = blocks.value[index + 1];
+                    blocks.value[index + 1] = temp;
+                }
+            };
+            // ---------------------------
 
             const saveKey = () => {
                 localStorage.setItem('siliconflow_key', apiKey.value);
                 localStorage.setItem('siliconflow_model', selectedModel.value);
-                alert('API Key 與模型選擇已儲存！');
+                localStorage.setItem('app_lang', currentLang.value);
+                alert(t('alertKeySaved'));
             };
 
             const getWrapper = (type) => {
@@ -190,14 +328,11 @@
             };
 
             const getPlaceholder = (type) => {
-                const map = {
-                    'role': '定義 AI 的角色 (Persona)...',
-                    'context': '貼上背景資訊、文件或數據...',
-                    'task': '描述主要的任務指令...',
-                    'code': '貼上程式碼片段...',
-                    'constraints': '限制條件 (如：不可使用外部庫)...'
-                };
-                return map[type] || '輸入內容...';
+                const prefix = 'ph_';
+                if (translations[currentLang.value][prefix + type]) {
+                    return t(prefix + type);
+                }
+                return t('ph_default');
             };
 
             const finalPrompt = computed(() => {
@@ -238,7 +373,7 @@
 
             const translateBlock = async (index) => {
                 if (!apiKey.value) {
-                    alert('請先在左上方輸入並儲存 API Key (SiliconFlow)');
+                    alert(t('alertNoKey'));
                     return;
                 }
                 const block = blocks.value[index];
@@ -260,7 +395,7 @@
                             messages: [
                                 {
                                     role: "system", 
-                                    content: "You are a professional technical translator. Translate the user's input from Chinese (Traditional) to English. \nRULES:\n1. Keep technical terms accurate.\n2. Do NOT explain the translation.\n3. Output ONLY the translated text." 
+                                    content: "You are a professional technical translator. Translate the user's input into English. \nRULES:\n1. Keep technical terms accurate.\n2. Do NOT explain the translation.\n3. Output ONLY the translated text." 
                                 },
                                 { role: "user", content: block.content }
                             ],
@@ -279,10 +414,10 @@
                     if (data.choices && data.choices[0]) {
                         block.content = data.choices[0].message.content;
                     } else {
-                        throw new Error('API 回傳格式錯誤');
+                        throw new Error('API Error Format');
                     }
                 } catch (e) {
-                    alert('翻譯失敗: ' + e.message + '\n請檢查 API Key 或額度');
+                    alert(t('alertTranslateFail') + e.message);
                     console.error(e);
                 } finally {
                     block.isTranslating = false;
@@ -290,9 +425,10 @@
             };
 
             return {
-                apiKey, saveKey, blocks, settings, finalPrompt, selectedModel,
+                apiKey, saveKey, blocks, settings, finalPrompt, selectedModel, currentLang,
                 addBlock, removeBlock, translateBlock, copyPrompt,
-                getWrapper, getPlaceholder
+                getWrapper, getPlaceholder, t,
+                moveBlockUp, moveBlockDown // Export new sort functions
             };
         }
     }).mount('#app');
