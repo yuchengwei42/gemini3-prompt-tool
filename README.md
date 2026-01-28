@@ -4,7 +4,7 @@
 
 A structured, research-backed prompt engineering tool designed to optimize workflows for Large Language Models (LLMs) like Gemini 3 Pro. This tool helps construct high-quality, repeatable prompts by separating concerns into distinct, manageable blocks.
 
-➡️ **Live Demo:** [**https://yuchengwei42.github.io/prompt-optimizer/**](https://yuchengwei42.github.io/prompt-optimizer/)
+➡️ **Live Demo:** [**https://yuchengwei42.github.io/prompt-optimizer/**](https://yuchengwei42.github.io/gemini3-prompt-tool/)
 
 ![Demo GIF](demo.gif)
 
