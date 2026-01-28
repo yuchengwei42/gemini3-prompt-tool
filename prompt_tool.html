@@ -3,175 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt Optimizer (Free API Edition)</title>
+    <title>Gemini 3 Prompt Composer</title>
     <!-- Vue 3 & Tailwind CSS -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Icon -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; background-color: #0f172a; color: #e2e8f0; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; background-color: #0b1120; color: #e2e8f0; }
+        .glass { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.1); }
+        .glass-input { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(51, 65, 85, 0.5); }
         textarea { field-sizing: content; min-height: 80px; }
-        select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; -webkit-appearance: none; appearance: none; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        a { color: #60a5fa; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        /* Dropdown transition */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
 <body>
 
-<div id="app" class="min-h-screen p-6 flex flex-col lg:flex-row gap-6 max-w-[1600px] mx-auto">
+<div id="app" class="min-h-screen p-4 lg:p-8 flex flex-col lg:flex-row gap-8 max-w-[1800px] mx-auto">
     
-    <!-- 左側：編輯區 -->
-    <div class="w-full lg:w-3/5 flex flex-col gap-4">
-        <header class="mb-4 flex justify-between items-start">
+    <!-- Left Column: Construction Area -->
+    <div class="w-full lg:w-3/5 flex flex-col gap-5">
+        <header class="mb-2 flex justify-between items-end">
             <div>
-                <h1 class="text-3xl font-bold text-blue-400"><i class="fa-solid fa-layer-group"></i> {{ t('appTitle') }}</h1>
-                <p class="text-slate-400 text-sm">{{ t('appSubtitle') }}</p>
+                <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 tracking-tight">
+                    <i class="fa-solid fa-layer-group mr-2"></i>Gemini 3 Prompt Composer
+                </h1>
+                <p class="text-slate-500 text-sm font-medium mt-1">{{ t('appSubtitle') }}</p>
             </div>
-            <!-- 語言選擇器 -->
-            <select v-model="currentLang" class="bg-slate-800 text-slate-300 text-xs py-1 px-2 rounded border border-slate-600 outline-none">
-                <option value="en">English</option>
-                <option value="zh">繁體中文</option>
-                <option value="ja">日本語  </option>
+            <!-- Language Selector -->
+            <select v-model="currentLang" class="bg-slate-900 text-slate-400 text-xs py-1 px-3 rounded border border-slate-700 outline-none hover:border-blue-500 transition">
+                <option value="en">English (Default)</option>
+                <option value="zh">繁體中文 (Taiwan)</option>
+                <option value="ja">日本語</option>
             </select>
         </header>
 
-        <!-- API 設定區 -->
-        <div class="glass p-4 rounded-lg flex flex-col gap-3 mb-2">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-key text-yellow-500"></i>
-                <input v-model="apiKey" type="password" :placeholder="t('apiKeyPlaceholder')" class="bg-transparent border-b border-slate-600 outline-none text-sm w-full text-slate-300 placeholder-slate-600 py-1 focus:border-blue-500 transition">
-                <button @click="saveKey" class="text-xs bg-slate-700 px-3 py-1.5 rounded hover:bg-slate-600 whitespace-nowrap">{{ t('saveKey') }}</button>
+        <!-- API Settings (Region Unchanged as requested) -->
+        <div class="glass p-5 rounded-xl flex flex-col gap-4 shadow-lg shadow-black/20">
+            <div class="flex items-center gap-3">
+                <div class="bg-yellow-500/10 p-2 rounded text-yellow-500"><i class="fa-solid fa-key"></i></div>
+                <input v-model="apiKey" type="password" :placeholder="t('apiKeyPlaceholder')" class="glass-input flex-1 outline-none text-sm text-slate-200 placeholder-slate-600 px-3 py-2 rounded focus:border-yellow-500/50 transition">
+                <button @click="saveKey" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded font-medium transition">{{ t('saveKey') }}</button>
             </div>
             
-            <div class="flex items-center gap-2 pl-6">
-                <i class="fa-solid fa-robot text-blue-400 text-xs"></i>
-                <select v-model="selectedModel" class="bg-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded border border-slate-600 w-full outline-none focus:border-blue-500 cursor-pointer">
+            <div class="flex items-center gap-3 pl-11">
+                <span class="text-xs text-blue-400 font-mono">MODEL</span>
+                <select v-model="selectedModel" class="glass-input text-slate-300 text-xs py-2 px-3 rounded flex-1 outline-none focus:border-blue-500/50 cursor-pointer">
                     <optgroup :label="t('modelGroupRec')">
-                        <option value="Qwen/Qwen2.5-7B-Instruct">Qwen 2.5 7B Instruct (Recommended)</option>
-                        <option value="THUDM/glm-4-9b-chat">GLM-4 9B Chat</option>
+                        <option value="Qwen/Qwen2.5-7B-Instruct">Qwen 2.5 7B Instruct (Best Overall)</option>
+                        <option value="THUDM/glm-4-9b-chat">GLM-4 9B Chat (Balanced)</option>
+                    </optgroup>
+                    <optgroup label="🧠 Reasoning & Logic (DeepSeek)">
+                        <option value="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B">DeepSeek R1 Distill (CoT Strong)</option>
+                    </optgroup>
+                    <optgroup label="💻 Coding Specialized">
+                        <option value="Qwen/Qwen2.5-Coder-7B-Instruct">Qwen 2.5 Coder (Best for Code)</option>
+                        <option value="internlm/internlm2_5-7b-chat">InternLM 2.5 7B</option>
                     </optgroup>
                     <optgroup :label="t('modelGroupTrans')">
-                        <option value="tencent/Hunyuan-MT-7B">Hunyuan MT 7B</option>
+                        <option value="tencent/Hunyuan-MT-7B">Hunyuan MT 7B (Best for Translation)</option>
                     </optgroup>
                     <optgroup :label="t('modelGroupFree')">
-                        <option value="Qwen/Qwen2.5-Coder-7B-Instruct">Qwen 2.5 Coder</option>
-                        <option value="internlm/internlm2_5-7b-chat">InternLM 2.5 7B</option>
-                        <option value="01-ai/Yi-1.5-9B-Chat-16K">Yi 1.5 9B Chat</option>
-                        <option value="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B">DeepSeek R1 Distill</option>
+                        <option value="01-ai/Yi-1.5-9B-Chat-16K">Yi 1.5 9B Chat (Long Context)</option>
                     </optgroup>
                 </select>
             </div>
         </div>
 
-        <!-- 積木區塊列表 (改為箭頭排序) -->
-        <div 
-            v-for="(block, index) in blocks" 
-            :key="index" 
-            class="glass rounded-xl p-4 relative group transition-all duration-300 hover:border-blue-500/50"
-        >
-            <!-- 區塊頭部 -->
-            <div class="flex justify-between items-center mb-2">
-                <div class="flex items-center gap-2">
-                    <!-- 排序按鈕 (替代原本的 Grip) -->
-                    <div class="flex items-center bg-slate-800/50 rounded border border-slate-700 mr-1">
-                        <button 
-                            @click="moveBlockUp(index)" 
-                            :disabled="index === 0"
-                            class="px-2 py-1 text-slate-500 hover:text-blue-400 hover:bg-slate-700 disabled:opacity-30 disabled:hover:text-slate-500 disabled:hover:bg-transparent transition rounded-l border-r border-slate-700"
-                            title="Move Up"
-                        >
-                            <i class="fa-solid fa-arrow-up text-xs"></i>
-                        </button>
-                        <button 
-                            @click="moveBlockDown(index)" 
-                            :disabled="index === blocks.length - 1"
-                            class="px-2 py-1 text-slate-500 hover:text-blue-400 hover:bg-slate-700 disabled:opacity-30 disabled:hover:text-slate-500 disabled:hover:bg-transparent transition rounded-r"
-                            title="Move Down"
-                        >
-                            <i class="fa-solid fa-arrow-down text-xs"></i>
-                        </button>
+        <!-- Block List -->
+        <div class="flex flex-col gap-4">
+            <div 
+                v-for="(block, index) in blocks" 
+                :key="index" 
+                class="glass rounded-xl p-1 relative group transition-all duration-300 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5"
+            >
+                <!-- Toolbar -->
+                <div class="flex flex-wrap justify-between items-center bg-slate-900/40 p-2 rounded-t-lg border-b border-slate-700/50 gap-2">
+                    <div class="flex items-center gap-2">
+                        <!-- Movement Controls -->
+                        <div class="flex items-center bg-slate-800 rounded border border-slate-700 overflow-hidden">
+                            <button @click="moveBlockTop(index)" :disabled="index === 0" title="Move to Top" class="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-slate-700 disabled:opacity-20 transition border-r border-slate-700/50"><i class="fa-solid fa-angles-up text-[10px]"></i></button>
+                            <button @click="moveBlockUp(index)" :disabled="index === 0" title="Move Up" class="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-slate-700 disabled:opacity-20 transition border-r border-slate-700/50"><i class="fa-solid fa-angle-up text-xs"></i></button>
+                            <button @click="moveBlockDown(index)" :disabled="index === blocks.length - 1" title="Move Down" class="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-slate-700 disabled:opacity-20 transition border-r border-slate-700/50"><i class="fa-solid fa-angle-down text-xs"></i></button>
+                            <button @click="moveBlockBottom(index)" :disabled="index === blocks.length - 1" title="Move to Bottom" class="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-slate-700 disabled:opacity-20 transition"><i class="fa-solid fa-angles-down text-[10px]"></i></button>
+                        </div>
+
+                        <!-- Type Selector -->
+                        <select v-model="block.type" class="bg-transparent text-blue-300 text-xs font-bold py-1 px-2 uppercase tracking-wide cursor-pointer hover:text-blue-200 outline-none">
+                            <option value="role">Role (Persona)</option>
+                            <option value="context">Context (Data)</option>
+                            <option value="task">Task (Instruction)</option>
+                            <option value="code">Code Snippet</option>
+                            <option value="constraints">Constraints</option>
+                            <option value="text">Plain Text</option>
+                        </select>
+                    </div>
+
+                    <!-- Preset Dropdown (Dynamic based on block type) -->
+                    <div v-if="block.type === 'role'" class="flex-1 min-w-[200px]">
+                        <select @change="(e) => block.content = e.target.value" class="w-full bg-slate-800 text-slate-400 text-[10px] py-1 px-2 rounded border border-slate-700/50 outline-none hover:border-emerald-500/50 transition cursor-pointer">
+                            <option value="" disabled selected>✨ Load Optimized Role Preset...</option>
+                            <option v-for="(preset, pIndex) in presetRoles" :key="pIndex" :value="preset.content">{{ preset.name }}</option>
+                        </select>
+                    </div>
+                    <div v-if="block.type === 'constraints'" class="flex-1 min-w-[200px]">
+                        <select @change="(e) => block.content = e.target.value" class="w-full bg-slate-800 text-slate-400 text-[10px] py-1 px-2 rounded border border-slate-700/50 outline-none hover:border-red-500/50 transition cursor-pointer">
+                            <option value="" disabled selected>🛡️ Load Hallucination Guard...</option>
+                            <option v-for="(preset, pIndex) in presetConstraints" :key="pIndex" :value="preset.content">{{ preset.name }}</option>
+                        </select>
                     </div>
                     
-                    <select v-model="block.type" class="bg-slate-800 text-blue-300 text-xs font-bold py-1 px-2 rounded border border-slate-700 uppercase tracking-wide cursor-pointer">
-                        <option value="text">Plain Text</option>
-                        <option value="role">Role</option>
-                        <option value="context">Context</option>
-                        <option value="task">Task</option>
-                        <option value="code">Code</option>
-                        <option value="constraints">Constraints</option>
-                    </select>
+                    <div class="flex gap-2">
+                        <!-- Translate Btn -->
+                        <button @click="translateBlock(index)" :disabled="block.isTranslating" class="h-7 px-3 text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 rounded hover:bg-indigo-500/20 transition flex items-center gap-2">
+                            <i v-if="block.isTranslating" class="fa-solid fa-circle-notch fa-spin"></i>
+                            <span v-else><i class="fa-solid fa-language"></i> EN</span>
+                        </button>
+                        <!-- Delete Btn -->
+                        <button @click="removeBlock(index)" class="h-7 w-7 flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Textarea -->
+                <div class="p-1">
+                    <textarea 
+                        v-model="block.content" 
+                        class="w-full bg-slate-900/30 text-slate-200 p-4 rounded-b-lg outline-none border-0 focus:ring-0 resize-none font-mono text-sm leading-relaxed placeholder-slate-600/50"
+                        :placeholder="getPlaceholder(block.type)"></textarea>
                 </div>
                 
-                <div class="flex gap-2 opacity-100 lg:opacity-50 group-hover:opacity-100 transition-opacity">
-                    <!-- 翻譯按鈕 -->
-                    <button @click="translateBlock(index)" :disabled="block.isTranslating" class="text-xs bg-indigo-900 text-indigo-200 px-2 py-1 rounded hover:bg-indigo-800 flex items-center gap-1 transition">
-                        <i v-if="block.isTranslating" class="fa-solid fa-circle-notch fa-spin text-blue-300"></i>
-                        <i v-else class="fa-solid fa-language"></i> 
-                        {{ block.isTranslating ? t('translating') : t('toEnglish') }}
-                    </button>
-                    <!-- 刪除按鈕 -->
-                    <button @click="removeBlock(index)" class="text-xs text-red-400 hover:text-red-300 px-2 transition"><i class="fa-solid fa-trash"></i></button>
+                <!-- Tag Indicator -->
+                <div class="absolute bottom-3 right-4 text-[10px] text-slate-600 font-mono pointer-events-none select-none opacity-50">
+                    {{ getWrapper(block.type)[0] }} ... {{ getWrapper(block.type)[1] }}
                 </div>
-            </div>
-
-            <!-- 輸入框 -->
-            <textarea 
-                v-model="block.content" 
-                class="w-full bg-slate-900/50 text-slate-200 p-3 rounded-md outline-none border border-transparent focus:border-blue-500/50 resize-none font-mono text-sm leading-relaxed placeholder-slate-600"
-                :placeholder="getPlaceholder(block.type)"></textarea>
-            
-            <!-- 標籤提示 -->
-            <div class="absolute bottom-2 right-4 text-[10px] text-slate-600 font-mono pointer-events-none select-none">
-                {{ getWrapper(block.type)[0] }} ... {{ getWrapper(block.type)[1] }}
             </div>
         </div>
 
-        <!-- 新增按鈕群 -->
-        <div class="flex gap-2 justify-center mt-2">
-            <button @click="addBlock('context')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-4 rounded-lg text-sm border border-slate-700 transition flex items-center gap-2"><i class="fa-solid fa-database text-purple-400"></i> Context</button>
-            <button @click="addBlock('task')" class="bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 py-2 px-4 rounded-lg text-sm border border-blue-900 transition flex items-center gap-2 shadow-[0_0_10px_rgba(37,99,235,0.2)]"><i class="fa-solid fa-bullseye"></i> Task</button>
-            <button @click="addBlock('code')" class="bg-slate-800 hover:bg-slate-700 text-green-300 py-2 px-4 rounded-lg text-sm border border-slate-700 transition flex items-center gap-2"><i class="fa-solid fa-code"></i> Code</button>
+        <!-- Add Buttons -->
+        <div class="grid grid-cols-4 gap-3 mt-2">
+            <button @click="addBlock('context')" class="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 py-3 rounded-xl text-xs font-bold border border-slate-700 transition flex flex-col items-center gap-1 group">
+                <i class="fa-solid fa-database text-lg text-purple-500 group-hover:scale-110 transition"></i> CONTEXT
+            </button>
+            <button @click="addBlock('task')" class="bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 hover:text-blue-300 py-3 rounded-xl text-xs font-bold border border-blue-800/50 transition flex flex-col items-center gap-1 group shadow-[0_0_15px_rgba(37,99,235,0.1)]">
+                <i class="fa-solid fa-bullseye text-lg group-hover:scale-110 transition"></i> TASK
+            </button>
+            <button @click="addBlock('code')" class="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 py-3 rounded-xl text-xs font-bold border border-slate-700 transition flex flex-col items-center gap-1 group">
+                <i class="fa-solid fa-code text-lg text-emerald-500 group-hover:scale-110 transition"></i> CODE
+            </button>
+             <button @click="addBlock('constraints')" class="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 py-3 rounded-xl text-xs font-bold border border-slate-700 transition flex flex-col items-center gap-1 group">
+                <i class="fa-solid fa-shield-halved text-lg text-red-400 group-hover:scale-110 transition"></i> RULES
+            </button>
         </div>
     </div>
 
-    <!-- 右側：輸出與設定 -->
-    <div class="w-full lg:w-2/5 flex flex-col gap-4">
+    <!-- Right Column: Output & Strategy -->
+    <div class="w-full lg:w-2/5 flex flex-col gap-5 sticky top-4 h-[calc(100vh-2rem)]">
         
-        <!-- 設定面板 -->
-        <div class="glass rounded-xl p-5">
-            <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider">{{ t('strategiesTitle') }}</h2>
+        <!-- Strategy Panel -->
+        <div class="glass rounded-xl p-5 border-t-4 border-t-blue-500">
+            <h2 class="text-xs font-bold text-blue-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-microchip"></i> Gemini 3 Strategy
+            </h2>
             
-            <label class="flex items-center gap-3 p-2 hover:bg-slate-800/50 rounded cursor-pointer transition">
-                <input type="checkbox" v-model="settings.useRepetition" class="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-500 accent-blue-600">
-                <div>
-                    <div class="text-sm text-slate-200 font-medium">Prompt Repetition</div>
-                    <div class="text-[10px] text-slate-500">{{ t('repetitionDesc') }}</div>
-                </div>
-            </label>
+            <div class="space-y-3">
+                <label class="flex items-start gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800 transition group border border-transparent hover:border-blue-500/30">
+                    <div class="pt-0.5"><input type="checkbox" v-model="settings.useRepetition" class="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-500 accent-blue-600"></div>
+                    <div>
+                        <div class="text-sm text-slate-200 font-bold group-hover:text-blue-300 transition">Prompt Repetition</div>
+                        <div class="text-[11px] text-slate-500 leading-tight mt-1">
+                            {{ t('repetitionDesc') }}
+                            <a href="https://arxiv.org/pdf/2512.14982" target="_blank" class="block mt-1 text-blue-500/80 hover:text-blue-400"><i class="fa-solid fa-paperclip"></i> Paper: Leviathan et al., 2025</a>
+                        </div>
+                    </div>
+                </label>
 
-            <label class="flex items-center gap-3 p-2 hover:bg-slate-800/50 rounded cursor-pointer mt-1 transition">
-                <input type="checkbox" v-model="settings.addCoT" class="w-4 h-4 rounded bg-slate-700 border-slate-600 text-pink-500 accent-pink-600">
-                <div>
-                    <div class="text-sm text-slate-200 font-medium">Chain of Thought (CoT)</div>
-                    <div class="text-[10px] text-slate-500">{{ t('cotDesc') }}</div>
-                </div>
-            </label>
+                <label class="flex items-start gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800 transition group border border-transparent hover:border-pink-500/30">
+                    <div class="pt-0.5"><input type="checkbox" v-model="settings.addCoT" class="w-4 h-4 rounded bg-slate-700 border-slate-600 text-pink-500 accent-pink-600"></div>
+                    <div>
+                        <div class="text-sm text-slate-200 font-bold group-hover:text-pink-300 transition">Chain of Thought (CoT)</div>
+                        <div class="text-[11px] text-slate-500 leading-tight mt-1">
+                            {{ t('cotDesc') }}
+                            <a href="https://arxiv.org/abs/2205.11916" target="_blank" class="block mt-1 text-pink-500/80 hover:text-pink-400"><i class="fa-solid fa-paperclip"></i> Paper: Kojima et al., 2022</a>
+                        </div>
+                    </div>
+                </label>
+            </div>
         </div>
 
-        <!-- 最終輸出 -->
-        <div class="glass rounded-xl p-0 flex-1 flex flex-col overflow-hidden border-blue-500/30 border shadow-2xl shadow-blue-900/10">
-            <div class="bg-slate-900/80 p-3 flex justify-between items-center border-b border-slate-700">
-                <span class="text-xs font-mono font-bold text-blue-400 flex items-center gap-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> OUTPUT PREVIEW
+        <!-- Final Output -->
+        <div class="glass rounded-xl p-0 flex-1 flex flex-col overflow-hidden border border-blue-500/20 shadow-2xl shadow-blue-900/10">
+            <div class="bg-slate-900/80 p-3 flex justify-between items-center border-b border-slate-700/50 backdrop-blur-sm">
+                <span class="text-[10px] font-mono font-bold text-slate-400 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> GENERATED PROMPT
                 </span>
-                <button @click="copyPrompt" class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition shadow-lg shadow-blue-900/20 font-bold">
-                    <i class="fa-regular fa-copy"></i> {{ t('copyAll') }}
-                </button>
+                
+                <div class="flex items-center gap-1">
+                    <!-- Scroll Buttons -->
+                    <button @click="scrollToTop" :title="t('scrollTop')" class="h-6 w-6 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-slate-800 rounded transition">
+                        <i class="fa-solid fa-arrow-up text-[10px]"></i>
+                    </button>
+                    <button @click="scrollToBottom" :title="t('scrollBottom')" class="h-6 w-6 flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-slate-800 rounded transition">
+                        <i class="fa-solid fa-arrow-down text-[10px]"></i>
+                    </button>
+                    
+                    <!-- Divider -->
+                    <div class="w-px h-4 bg-slate-700 mx-1"></div>
+
+                    <!-- Save Buttons -->
+                    <div class="flex bg-slate-800 rounded-lg border border-slate-700 overflow-hidden mr-2">
+                        <button @click="downloadPrompt('txt')" :title="t('saveTxt')" class="px-2 py-1 text-[10px] text-slate-300 hover:text-white hover:bg-slate-700 transition font-bold">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> TXT
+                        </button>
+                        <button @click="downloadPrompt('md')" :title="t('saveMd')" class="px-2 py-1 text-[10px] text-slate-400 hover:text-white hover:bg-slate-700 border-l border-slate-700 transition font-mono">
+                            MD
+                        </button>
+                    </div>
+
+                    <!-- Copy Button -->
+                    <button 
+                        @click="copyPrompt" 
+                        class="text-xs text-white px-3 py-1.5 rounded-full transition shadow-lg shadow-blue-900/20 font-bold flex items-center gap-2"
+                        :class="copied ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'"
+                    >
+                        <i :class="copied ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i> 
+                        {{ copied ? t('copied') : t('copyAll') }}
+                    </button>
+                </div>
             </div>
-            <textarea readonly class="flex-1 w-full bg-[#0b1120] text-slate-300 p-4 font-mono text-xs leading-loose outline-none resize-none" v-model="finalPrompt"></textarea>
-            <div class="bg-slate-900/80 p-2 flex justify-between px-4 text-[10px] text-slate-500 border-t border-slate-800">
+            
+            <textarea ref="outputTextarea" readonly class="flex-1 w-full bg-[#080c14] text-slate-300 p-5 font-mono text-xs leading-loose outline-none resize-none selection:bg-blue-500/30" v-model="finalPrompt"></textarea>
+            
+            <div class="bg-slate-900 p-2 px-4 text-[10px] text-slate-600 border-t border-slate-800 flex justify-between">
                 <span>Model: {{ selectedModel.split('/')[1] }}</span>
-                <span>{{ finalPrompt.length }} chars</span>
+                <span>Length: {{ finalPrompt.length }} chars</span>
             </div>
         </div>
     </div>
@@ -181,254 +257,257 @@
 <script>
     const { createApp, ref, computed, onMounted } = Vue;
 
-    // 多語言字典 (I18n Dictionary)
+    // Translations Dictionary
     const translations = {
         en: {
-            appTitle: 'Prompt Composer',
-            appSubtitle: 'Structured Prompt Optimizer (SiliconFlow API Integrated)',
-            apiKeyPlaceholder: 'Paste SiliconFlow API Key (sk-...)',
+            appSubtitle: 'Structured Prompt Optimizer (Gemini 3 Pro Optimized)',
+            apiKeyPlaceholder: 'SiliconFlow API Key (sk-...)',
             saveKey: 'Save Key',
-            modelGroupRec: '✨ Recommended (Strong All-rounder)',
+            modelGroupRec: '✨ General Intelligence (Recommended)',
             modelGroupTrans: '📚 Translation Specialized',
-            modelGroupFree: '🆓 Other Free Models',
-            translating: 'Translating...',
-            toEnglish: 'To English',
-            strategiesTitle: 'Optimization Strategies',
-            repetitionDesc: 'Repeats core Task instructions to improve model compliance.',
-            cotDesc: 'Adds "Think step-by-step" to trigger reasoning capabilities.',
-            copyAll: 'Copy All',
-            ph_role: 'Define AI Persona (e.g., You are an expert in...)',
-            ph_context: 'Paste background context, data, or documents...',
-            ph_task: 'Describe the main task or instruction...',
-            ph_code: 'Paste code snippets...',
-            ph_constraints: 'Set limitations (e.g., No external libraries)...',
-            ph_default: 'Enter content...',
-            alertKeySaved: 'API Key and Model preference saved!',
-            alertNoKey: 'Please enter and save your SiliconFlow API Key first.',
+            modelGroupFree: '🆓 Other Models',
+            repetitionDesc: 'Repeats the <task> block directly. Improves compliance for non-reasoning tasks. (Note: Redundant if CoT is active).',
+            cotDesc: 'Appends Gemini-optimized reasoning instruction to the end of the prompt.',
+            copyAll: 'COPY',
+            copied: 'COPIED!',
+            saveTxt: 'Save as .txt',
+            saveMd: 'Save as .md',
+            scrollTop: 'Scroll to Top',
+            scrollBottom: 'Scroll to Bottom',
+            ph_role: 'System Persona (e.g., You are Gemini 3, a strict coding architect...)',
+            ph_context: 'Paste documents, data, or previous conversation here...',
+            ph_task: 'The direct instruction (e.g., "Refactor this code")...',
+            ph_code: 'Paste source code here...',
+            ph_constraints: 'Negative constraints (e.g., "No external libraries")...',
+            ph_default: 'Content...',
+            alertKeySaved: 'API Key saved.',
+            alertNoKey: 'Please save your API Key first.',
             alertTranslateFail: 'Translation failed: '
         },
         zh: {
-            appTitle: 'Prompt Composer',
-            appSubtitle: '結構化 Prompt 優化器 (整合 SiliconFlow 免費模型)',
+            appSubtitle: '結構化 Prompt 優化器 (針對 Gemini 3 Pro 優化)',
             apiKeyPlaceholder: '貼上 SiliconFlow API Key (sk-...)',
-            saveKey: '儲存 Key',
-            modelGroupRec: '✨ 強力推薦 (綜合能力強)',
+            saveKey: '儲存',
+            modelGroupRec: '✨ 通用智慧 (強力推薦)',
             modelGroupTrans: '📚 翻譯專用',
-            modelGroupFree: '🆓 其他免費模型',
-            translating: '翻譯中...',
-            toEnglish: '轉英文',
-            strategiesTitle: '優化策略 (Strategies)',
-            repetitionDesc: '重複核心 Task 指令，增強模型遵循力。',
-            cotDesc: '加入 "Think step-by-step" 激發推理能力。',
-            copyAll: '複製全部',
-            ph_role: '定義 AI 的角色 (Persona)...',
-            ph_context: '貼上背景資訊、文件或數據...',
-            ph_task: '描述主要的任務指令...',
-            ph_code: '貼上程式碼片段...',
-            ph_constraints: '限制條件 (如：不可使用外部庫)...',
+            modelGroupFree: '🆓 其他模型',
+            repetitionDesc: '直接重複 <task> 區塊。提升非推理任務的遵循度 (註：若啟用 CoT 則效果會重疊)。',
+            cotDesc: '在 Prompt 尾端加入針對 Gemini 優化的推理指令。',
+            copyAll: '複製',
+            copied: '已複製！',
+            saveTxt: '儲存為 .txt',
+            saveMd: '儲存為 .md',
+            scrollTop: '捲動至頂部',
+            scrollBottom: '捲動至底部',
+            ph_role: '設定角色 (如：你是一位嚴格的 Gemini 3 架構師...)',
+            ph_context: '貼上背景資料、文件或對話紀錄...',
+            ph_task: '明確的指令 (如："重構這段程式碼")...',
+            ph_code: '貼上原始碼...',
+            ph_constraints: '限制條件 (如："不可使用外部函式庫")...',
             ph_default: '輸入內容...',
-            alertKeySaved: 'API Key 與模型選擇已儲存！',
-            alertNoKey: '請先在左上方輸入並儲存 API Key (SiliconFlow)',
+            alertKeySaved: 'API Key 已儲存。',
+            alertNoKey: '請先輸入並儲存 API Key。',
             alertTranslateFail: '翻譯失敗: '
         },
         ja: {
-            appTitle: 'Prompt Composer',
-            appSubtitle: '構造化プロンプト最適化ツール (SiliconFlow API 統合)',
-            apiKeyPlaceholder: 'SiliconFlow API Key を貼り付け (sk-...)',
+            appSubtitle: '構造化プロンプト最適化 (Gemini 3 Pro 最適化)',
+            apiKeyPlaceholder: 'SiliconFlow API Key (sk-...)',
             saveKey: '保存',
             modelGroupRec: '✨ 推奨 (高性能)',
             modelGroupTrans: '📚 翻訳専用',
-            modelGroupFree: '🆓 その他無料モデル',
-            translating: '翻訳中...',
-            toEnglish: '英語へ',
-            strategiesTitle: '最適化戦略',
-            repetitionDesc: '指示を繰り返し、コンプライアンスを向上させます。',
-            cotDesc: '"Think step-by-step" を追加し、推論能力を引き出します。',
-            copyAll: 'すべてコピー',
+            modelGroupFree: '🆓 その他',
+            repetitionDesc: '<task>ブロックを繰り返します。推論以外のタスクで順守率を向上させます。',
+            cotDesc: 'Gemini用に最適化された推論指示をプロンプトの末尾に追加します。',
+            copyAll: 'コピー',
+            copied: '完了!',
+            saveTxt: '.txt として保存',
+            saveMd: '.md として保存',
+            scrollTop: '最上部へ',
+            scrollBottom: '最下部へ',
             ph_role: 'AIの役割を定義 (Persona)...',
             ph_context: '背景情報、データ、ドキュメントを貼り付け...',
             ph_task: '主なタスクや指示を記述...',
             ph_code: 'コードスニペットを貼り付け...',
             ph_constraints: '制約事項 (例: 外部ライブラリ使用禁止)...',
             ph_default: '内容を入力...',
-            alertKeySaved: 'APIキーとモデル設定を保存しました！',
-            alertNoKey: '左上のAPI Keyを入力して保存してください。',
+            alertKeySaved: 'APIキーを保存しました。',
+            alertNoKey: 'API Keyを入力してください。',
             alertTranslateFail: '翻訳失敗: '
         }
     };
+
+    // Preset Data
+    const presetRoles = [
+        { 
+            name: "Karpathy's Simulator (Multi-Expert Debate) [DEFAULT]", 
+            content: "You are not an AI assistant. You are a high-fidelity simulator. Your task is to simulate a 'Board of Experts' appropriate for the user's query. Identify the most relevant expert personas (e.g., a skeptical academic, a pragmatic engineer, a visionary futurist) and simulate a rigorous debate or collaborative discussion among them to reach a comprehensive answer. Output the dialogue or the synthesized conclusion of this simulated group."
+        },
+        { 
+            name: "Gemini 3 Pro - Coding Specialist", 
+            content: "You are Gemini 3, a Distinguished Software Architect. You are precise, pragmatic, and heavily biased towards efficient, scalable, and modern coding practices.\n\n<instructions>\n1. Plan: Analyze the task and create a step-by-step plan before coding.\n2. Execute: Carry out the plan using modern syntax (e.g., Python 3.12+, ES2024).\n3. Validate: Review your output against the user's requirements.\n4. Format: Return a single, copy-pasteable code block.\n</instructions>"
+        },
+        {
+            name: "Senior Technical Writer",
+            content: "You are a Senior Technical Writer at a top-tier tech company (e.g., Google, Stripe). Your writing is clear, concise, and focused on user value. You avoid fluff, jargon without explanation, and passive voice. You prioritize structure, using bullet points and headers effectively."
+        }
+    ];
+
+    const presetConstraints = [
+        {
+            name: "Strict Grounding (Reduce Hallucination) - Official",
+            content: "You are a strictly grounded assistant limited to the information provided in the User Context. In your answers, rely **only** on the facts that are directly mentioned in that context. You must **not** access or utilize your own knowledge or common sense to answer. Do not assume or infer from the provided facts; simply report them exactly as they appear. If the exact answer is not explicitly written in the context, you must state that the information is not available."
+        },
+        {
+            name: "Academic Verification & Citations",
+            content: "Base your answer *only* on verifiable facts and scientific consensus. Where possible, cite credible English sources (e.g., academic papers, official documentation) to support your claims. If a statement is speculative, explicitly label it as such. Do not invent sources."
+        },
+        {
+            name: "Concise & No Yapping",
+            content: "Be extremely concise. Do not offer pleasantries (e.g., 'Here is the code', 'I hope this helps'). Output only the requested content/code. Minimize explanation unless explicitly asked."
+        }
+    ];
 
     createApp({
         setup() {
             const apiKey = ref('');
             const selectedModel = ref('Qwen/Qwen2.5-7B-Instruct');
-            const currentLang = ref('en'); // Default language
+            const currentLang = ref('en'); // Default: English
+            const copied = ref(false); // New state for copy feedback
+            const outputTextarea = ref(null); // Reference to the output textarea
             
             const blocks = ref([
-                { type: 'role', content: 'You are Gemini 3, a Distinguished Software Architect. You are precise, pragmatic, and heavily biased towards modern coding practices.', isTranslating: false },
-                { type: 'context', content: '', isTranslating: false },
-                { type: 'task', content: '', isTranslating: false }
+                { type: 'role', content: presetRoles[0].content, isTranslating: false }, 
+                { type: 'task', content: '', isTranslating: false }, // Reordered: Task is now 2nd
+                { type: 'context', content: '', isTranslating: false } // Reordered: Context is now 3rd
             ]);
 
+            // Changed Defaults: both true
             const settings = ref({
-                useRepetition: false,
+                useRepetition: true,
                 addCoT: true
             });
 
-            // I18n Helper
-            const t = (key) => {
-                return translations[currentLang.value][key] || translations['en'][key];
-            };
+            const t = (key) => translations[currentLang.value][key] || translations['en'][key];
 
             onMounted(() => {
                 const savedKey = localStorage.getItem('siliconflow_key');
                 const savedModel = localStorage.getItem('siliconflow_model');
-                const savedLang = localStorage.getItem('app_lang');
                 if (savedKey) apiKey.value = savedKey;
                 if (savedModel) selectedModel.value = savedModel;
-                if (savedLang && translations[savedLang]) currentLang.value = savedLang;
             });
 
-            // --- Reorder Logic (Arrow Buttons) ---
-            const moveBlockUp = (index) => {
-                if (index > 0) {
-                    // 交換位置
-                    const temp = blocks.value[index];
-                    blocks.value[index] = blocks.value[index - 1];
-                    blocks.value[index - 1] = temp;
-                }
-            };
-
-            const moveBlockDown = (index) => {
-                if (index < blocks.value.length - 1) {
-                    // 交換位置
-                    const temp = blocks.value[index];
-                    blocks.value[index] = blocks.value[index + 1];
-                    blocks.value[index + 1] = temp;
-                }
-            };
-            // ---------------------------
+            // --- Movement Logic ---
+            const moveBlockUp = (i) => { if(i>0) [blocks.value[i], blocks.value[i-1]] = [blocks.value[i-1], blocks.value[i]]; };
+            const moveBlockDown = (i) => { if(i<blocks.value.length-1) [blocks.value[i], blocks.value[i+1]] = [blocks.value[i+1], blocks.value[i]]; };
+            const moveBlockTop = (i) => { if(i>0) blocks.value.unshift(blocks.value.splice(i, 1)[0]); };
+            const moveBlockBottom = (i) => { if(i<blocks.value.length-1) blocks.value.push(blocks.value.splice(i, 1)[0]); };
 
             const saveKey = () => {
                 localStorage.setItem('siliconflow_key', apiKey.value);
                 localStorage.setItem('siliconflow_model', selectedModel.value);
-                localStorage.setItem('app_lang', currentLang.value);
                 alert(t('alertKeySaved'));
             };
 
             const getWrapper = (type) => {
                 const map = {
                     'text': ['', ''],
-                    'role': ['<role>', '</role>'],
+                    'role': ['<system_role>', '</system_role>'],
                     'context': ['<context>', '</context>'],
                     'task': ['<task>', '</task>'],
-                    'code': ['\n```\n', '\n```\n'],
+                    'code': ['<code_context>', '</code_context>'], 
                     'constraints': ['<constraints>', '</constraints>']
                 };
                 return map[type] || ['', ''];
             };
 
-            const getPlaceholder = (type) => {
-                const prefix = 'ph_';
-                if (translations[currentLang.value][prefix + type]) {
-                    return t(prefix + type);
-                }
-                return t('ph_default');
-            };
+            const getPlaceholder = (type) => t('ph_' + type) || t('ph_default');
 
             const finalPrompt = computed(() => {
                 let parts = [];
+                
+                // 1. Process standard blocks
                 blocks.value.forEach(block => {
                     if (!block.content.trim()) return;
                     const [start, end] = getWrapper(block.type);
                     parts.push(`${start}\n${block.content.trim()}\n${end}`);
                 });
 
+                // 2. Prompt Repetition Logic
                 if (settings.value.useRepetition) {
-                    const taskBlocks = blocks.value.filter(b => b.type === 'task');
-                    if (taskBlocks.length > 0) {
-                        parts.push('\n<reminder>\nIMPORTANT: I will repeat the task requirements to ensure clarity.\n</reminder>\n');
-                        taskBlocks.forEach(block => {
-                             parts.push(`<task_repetition>\n${block.content.trim()}\n</task_repetition>`);
-                        });
-                    }
+                    const taskBlocks = blocks.value.filter(b => b.type === 'task' && b.content.trim());
+                    taskBlocks.forEach(block => {
+                         parts.push(`<task>\n${block.content.trim()}\n</task>`);
+                    });
                 }
 
+                // 3. Chain of Thought (CoT) Logic
                 if (settings.value.addCoT) {
-                    parts.push('\nTake a deep breath and think step-by-step before answering.');
+                    parts.push('\n<final_instruction>\nRemember to think step-by-step before answering.\n</final_instruction>');
                 }
 
                 return parts.join('\n\n');
             });
 
-            const addBlock = (type) => {
-                blocks.value.push({ type, content: '', isTranslating: false });
-            };
-            const removeBlock = (index) => {
-                blocks.value.splice(index, 1);
-            };
-
+            const addBlock = (type) => blocks.value.push({ type, content: '', isTranslating: false });
+            const removeBlock = (i) => blocks.value.splice(i, 1);
+            
             const copyPrompt = () => {
                 navigator.clipboard.writeText(finalPrompt.value);
+                copied.value = true;
+                setTimeout(() => { copied.value = false; }, 2000); 
+            };
+
+            // --- New Output Functions ---
+            const scrollToTop = () => {
+                if (outputTextarea.value) outputTextarea.value.scrollTop = 0;
+            };
+
+            const scrollToBottom = () => {
+                if (outputTextarea.value) outputTextarea.value.scrollTop = outputTextarea.value.scrollHeight;
+            };
+
+            const downloadPrompt = (ext) => {
+                const blob = new Blob([finalPrompt.value], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `gemini_prompt_${new Date().toISOString().slice(0,10)}.${ext}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             };
 
             const translateBlock = async (index) => {
-                if (!apiKey.value) {
-                    alert(t('alertNoKey'));
-                    return;
-                }
+                if (!apiKey.value) return alert(t('alertNoKey'));
                 const block = blocks.value[index];
                 if (!block.content) return;
-
                 block.isTranslating = true;
-                
-                localStorage.setItem('siliconflow_model', selectedModel.value);
-
                 try {
                     const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
                         method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${apiKey.value}`,
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Authorization': `Bearer ${apiKey.value}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             model: selectedModel.value,
                             messages: [
-                                {
-                                    role: "system", 
-                                    content: "You are a professional technical translator. Translate the user's input into English. \nRULES:\n1. Keep technical terms accurate.\n2. Do NOT explain the translation.\n3. Output ONLY the translated text." 
-                                },
+                                { role: "system", content: "Translate to English. Technical terms must remain accurate. Output ONLY the translated text." },
                                 { role: "user", content: block.content }
                             ],
-                            temperature: 0.3,
-                            max_tokens: 2048,
-                            stream: false
+                            temperature: 0.3, max_tokens: 2048
                         })
                     });
-
-                    if (!response.ok) {
-                        const errData = await response.json();
-                        throw new Error(errData.error?.message || response.statusText);
-                    }
-
                     const data = await response.json();
-                    if (data.choices && data.choices[0]) {
-                        block.content = data.choices[0].message.content;
-                    } else {
-                        throw new Error('API Error Format');
-                    }
-                } catch (e) {
-                    alert(t('alertTranslateFail') + e.message);
-                    console.error(e);
-                } finally {
-                    block.isTranslating = false;
-                }
+                    if (data.choices?.[0]) block.content = data.choices[0].message.content;
+                } catch (e) { alert(t('alertTranslateFail') + e.message); } 
+                finally { block.isTranslating = false; }
             };
 
             return {
-                apiKey, saveKey, blocks, settings, finalPrompt, selectedModel, currentLang,
-                addBlock, removeBlock, translateBlock, copyPrompt,
+                apiKey, saveKey, blocks, settings, finalPrompt, selectedModel, currentLang, copied, outputTextarea,
+                addBlock, removeBlock, translateBlock, copyPrompt, scrollToTop, scrollToBottom, downloadPrompt,
                 getWrapper, getPlaceholder, t,
-                moveBlockUp, moveBlockDown // Export new sort functions
+                moveBlockUp, moveBlockDown, moveBlockTop, moveBlockBottom,
+                presetRoles, presetConstraints // Export presets
             };
         }
     }).mount('#app');
