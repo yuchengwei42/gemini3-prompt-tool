@@ -21,8 +21,8 @@ The quality of output from modern LLMs is highly dependent on the quality of the
 *   **🚀 Research-Backed Strategies**: Toggle on/off proven techniques with a single click:
     *   **Prompt Repetition**: Enhances task compliance for certain models.
     *   **Chain of Thought (CoT)**: Guides the model towards more robust reasoning.
-*   **📋 Inspired Presets**: The default "Karpathy's Simulator (Multi-Expert Debate)" role is directly inspired by Andrej Karpathy's insight on prompting.
-  > This approach treats the LLM not as a monolithic entity, but as a high-fidelity simulator capable of channeling a "Board of Experts" to provide a more robust and nuanced answer.
+*   **📋 Inspired Presets**: The default "Karpathy's Simulator" role applies Andrej Karpathy's "LLM as Simulator" philosophy. It prompts the model to simulate a "good group of people" rather than answering as a generic AI.
+  > "Don't think of LLMs as entities but as simulators... Next time try: 'What would be a good group of people to explore xyz? What would they say?'"
   >
   > — [Andrej Karpathy on X (formerly Twitter)](https://x.com/karpathy/status/1997731268969304070?s=20)
 *   **💾 Export & Share**: Copy the final prompt or save it as a `.txt` or `.md` file for easy sharing and documentation.
@@ -56,5 +56,5 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 
 ### 📄 License
 
-Copyright © 2026 Yu-Cheng, Wei.
+Copyright © 2026 Yu-Cheng Wei.
 This project is [MIT](https://github.com/yuchengwei42/gemini3-prompt-tool/blob/main/LICENSE) licensed.
