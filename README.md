@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A structured, research-backed prompt engineering tool designed to optimize workflows for Large Language Models (LLMs) like Gemini 3 Pro. This tool helps construct high-quality, repeatable prompts by separating concerns into distinct, manageable blocks.
+A structured, research-backed prompt engineering tool that lets you harness the latest breakthroughs in LLM reasoning — especially **Society of Thought** (Kim et al., 2026).
 
 ➡️ **Live Demo:** [**https://yuchengwei42.github.io/gemini3-prompt-tool/**](https://yuchengwei42.github.io/gemini3-prompt-tool/)
 
@@ -12,49 +12,54 @@ A structured, research-backed prompt engineering tool designed to optimize workf
 
 ### 💡 Motivation
 
-The quality of output from modern LLMs is highly dependent on the quality of the input prompt. "Structured Prompting" is a best practice that involves breaking down a complex request into clear components like `role`, `task`, and `context`. This tool was built to streamline that process, making it easier to experiment with and deploy sophisticated prompting strategies backed by recent academic research.
+Modern reasoning models like DeepSeek-R1 and Gemini 3 do not simply produce longer chains of thought. According to the latest research, their superior performance comes from **internally simulating a society of thought** — a dynamic, multi-agent debate among distinct cognitive perspectives with diverse personalities and expertise.
+
+This tool was built to make that breakthrough accessible: you can construct prompts using clean blocks, then instantly activate paper-verified reasoning strategies with one click.
 
 ### ✨ Key Features
 
-*   **🧱 Block-Based Editor**: Construct prompts using logical blocks (`Role`, `Task`, `Context`, `Code`, etc.).
-*   **↔️ Drag & Drop Interface**: Easily reorder blocks to experiment with prompt structure.
-*   **🚀 Research-Backed Strategies**: Toggle on/off proven techniques with a single click:
-    *   **Prompt Repetition**: Enhances task compliance for certain models.
-    *   **Chain of Thought (CoT)**: Guides the model towards more robust reasoning.
-*   **📋 Inspired Presets**: The default "Karpathy's Simulator" role applies Andrej Karpathy's "LLM as Simulator" philosophy. It prompts the model to simulate a "good group of people" rather than answering as a generic AI.
-  > "Don't think of LLMs as entities but as simulators... Next time try: 'What would be a good group of people to explore xyz? What would they say?'"
-  >
-  > — [Andrej Karpathy on X (formerly Twitter)](https://x.com/karpathy/status/1997731268969304070?s=20)
-*   **💾 Export & Share**: Copy the final prompt or save it as a `.txt` or `.md` file for easy sharing and documentation.
-*   **🌐 Multi-Language UI**: Supports English, Traditional Chinese (繁體中文), and Japanese (日本語).
-*   **🔒 Secure & Private**: All data, including your API key, is stored locally in your browser's `localStorage` and never sent to a server.
+*   **🧱 Block-Based Editor** — Role, Task, Context, Code, Constraints… reorder freely.
+*   **Society of Thought Mode** (New!) — Directly implements the conversation-style scaffolding from Kim et al. (2026). The model simulates 3 distinct thinkers (Meticulous Verifier + Creative Strategist + Skeptical Auditor) engaging in realistic back-and-forth debate inside `<think>` tags. Disagreements are encouraged. No fixed turn order. Forces consensus before final answer.
+*   **Classic CoT & Prompt Repetition** — Toggle traditional techniques for comparison or specific use cases.
+*   **Research-Backed Presets** — Includes "Society of Thought (Paper Verified)" and Karpathy-style simulator.
+*   **Export & Share** — Copy or save as `.txt`/`.md`.
+*   **Multi-Language UI** — English, 繁體中文, 日本語.
+*   **100% Private** — Everything stays in your browser.
 
 ### 🔬 Academic Foundations
 
-This tool directly implements prompting techniques discussed in influential AI research papers. Citing and building upon established research is crucial for advancing the field.
+This tool directly implements techniques from influential papers:
 
-1.  **Chain of Thought (CoT)**
-    > The tool includes an option to append a CoT trigger (`"Remember to think step-by-step..."`), a simplified application of the principles shown to improve reasoning in LLMs.
-    >
-    > *   Kojima, T., Gu, S. S., Reid, M., Matsuo, Y., & Iwasawa, Y. (2022). *Large Language Models are Zero-Shot Reasoners*. arXiv preprint arXiv:2205.11916.
+**1. Society of Thought (Core Feature)**  
+> Enhanced reasoning emerges from the implicit simulation of complex, multi-agent-like interactions — a "society of thought".  
+> 
+> *Kim, J. et al. (2026). Reasoning Models Generate Societies of Thought. arXiv preprint.*
 
-2.  **Prompt Repetition**
-    > The "Prompt Repetition" toggle duplicates the `<task>` block, a technique observed to increase focus and adherence to instructions in some models.
-    >
-    > *(Note: The original source code cites a fictional paper "Leviathan et al., 2025". The principle itself is a known folk technique in the prompt engineering community.)*
+The **Society of Thought** mode in this tool reproduces the exact conversation-style SFT prompt used in the paper, including:
+- Distinct personas with Big Five personality differences
+- Realistic back-and-forth dialogue (any order, multiple turns)
+- Encouragement of disagreement and perspective conflict
+- Strict XML structure (`<think>`, `<thinker1>`, etc.)
+- Forced consensus before final answer
+
+**2. Chain of Thought (CoT)**  
+Kojima et al. (2022). *Large Language Models are Zero-Shot Reasoners*.
+
+**3. Prompt Repetition**  
+Observed technique that improves instruction adherence in certain models.
+
+---
 
 ### 🛠️ Tech Stack
 
-*   **Framework**: Vue 3 (Composition API)
-*   **Styling**: Tailwind CSS
-*   **Icons**: Font Awesome
-*   **Persistence**: Browser `localStorage` (No backend required)
+*   Vue 3 (Composition API) + Tailwind CSS
+*   Font Awesome
+*   Browser `localStorage` only
 
 ### 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/yuchengwei42/gemini3-prompt-tool/issues).
+Contributions welcome! Especially ideas to add more paper-verified modes (Tree-of-Thoughts, Graph-of-Thoughts, etc.).
 
 ### 📄 License
 
-Copyright © 2026 Yu-Cheng Wei.
-This project is [MIT](https://github.com/yuchengwei42/gemini3-prompt-tool/blob/main/LICENSE) licensed.
+MIT © 2026 Yu-Cheng Wei
